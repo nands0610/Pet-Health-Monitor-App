@@ -1,76 +1,109 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'home_page.dart';
+import 'vet_page.dart';
+import 'food_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; 
+import 'custom_header.dart'; 
 
-import 'analysis_page.dart';
-import 'sensor_data_page.dart';
-import 'profile_page.dart';
 
-void main() => runApp(const PetHealthApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const PetHealthApp());
+}
 
 class PetHealthApp extends StatelessWidget {
-  const PetHealthApp({super.key});
+  const PetHealthApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final seed = Colors.teal;
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Pet Health',
+      title: 'Pet Health Monitoring System',
       theme: ThemeData(
+        primarySwatch: Colors.teal,
         useMaterial3: true,
-        colorSchemeSeed: seed,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        scaffoldBackgroundColor: const Color(0xFFF7F9FC),
       ),
-      home: const HomeShell(),
+      home: const MainScaffold(),
     );
   }
 }
 
-class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+class MainScaffold extends StatefulWidget {
+  const MainScaffold({Key? key}) : super(key: key);
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _HomeShellState extends State<HomeShell> {
-  int _index = 1;                    // default to Sensor page
-  final pages = const [
-    AnalysisPage(),
-    SensorDataPage(),
-    ProfilePage(),
+class _MainScaffoldState extends State<MainScaffold> {
+  int _currentIndex = 1; // 0 = Vet, 1 = Home, 2 = Food
+
+  final _pages = const [
+    VetPage(),
+    HomePage(),
+    FoodPage(),
   ];
+
+  void _onTap(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text('Pet Health Monitoring System'),
+      leading: IconButton(
+        icon: const Icon(Icons.account_circle_outlined),
+        onPressed: () {
+          // TODO: Navigate to profile page
+        },
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none),
+          onPressed: () {
+            // TODO: Notifications placeholder
+          },
+        ),
+      ],
+    );
+  }
+
+  BottomNavigationBar _buildNavBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: _onTap,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.local_hospital_outlined),
+          label: 'Vet',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.pets),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.restaurant_menu),
+          label: 'Food',
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Pet Health Monitoring'),
-      ),
-      body: pages[_index],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights),
-            label: 'Analysis',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.monitor_heart_outlined),
-            selectedIcon: Icon(Icons.monitor_heart),
-            label: 'Sensor',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+      body: Column(
+      children: [
+        const CustomHeader(), // Top bar with logo + title + bell
+        Expanded(child: _pages[_currentIndex]), // Your actual page
         ],
-      ),
+      ),  
+      bottomNavigationBar: _buildNavBar(),
     );
   }
 }
