@@ -2,9 +2,9 @@
 // FILE: home_page.dart
 // ===========================
 import 'package:flutter/material.dart';
-import 'metric_card.dart';
-import 'vet_page.dart';
-import 'food_page.dart';
+import '../../components/home-cards/metric_card.dart';
+import '../vet-page/vet_page.dart';
+import '../food-page/food_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

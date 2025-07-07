@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
-import 'vet_page.dart';
-import 'food_page.dart';
+import 'pages/home-page/home_page.dart';
+import 'pages/vet-page/vet_page.dart';
+import 'pages/food-page/food_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; 
-import 'custom_header.dart'; 
+import 'components/navbar/custom_header.dart'; 
 
 
 void main() async {
