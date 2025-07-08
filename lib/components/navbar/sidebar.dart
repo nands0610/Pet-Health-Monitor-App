@@ -6,23 +6,37 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.teal),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
+          Container(
+            color: Colors.teal,
+            padding: const EdgeInsets.all(12),
+            height: 100,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CircleAvatar(
                   radius: 40,
                   backgroundImage: AssetImage('assets/pet_placeholder.jpg'),
                 ),
-                SizedBox(height: 8,),
-                Text(
-                  'Pika',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                )
+                SizedBox(width: 15,),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pika',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    ),
+                    Text(
+                      'Golden Retriever',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    )
+                ]),
               ],
             ),
           ),
