@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pet_health/components/navbar/sidebar.dart';
 import 'pages/home-page/home_page.dart';
 import 'pages/vet-page/vet_page.dart';
 import 'pages/food-page/food_page.dart';
@@ -97,6 +98,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       body: Column(
       children: [
         const CustomHeader(), // Top bar with logo + title + bell
