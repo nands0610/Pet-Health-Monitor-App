@@ -11,9 +11,19 @@ class CustomDrawer extends StatelessWidget {
         children: [
           const DrawerHeader(
             decoration: BoxDecoration(color: Colors.teal),
-            child: Text(
-              'Menu',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundImage: AssetImage('assets/pet_placeholder.jpg'),
+                ),
+                SizedBox(height: 8,),
+                Text(
+                  'Pika',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                )
+              ],
             ),
           ),
           ListTile(

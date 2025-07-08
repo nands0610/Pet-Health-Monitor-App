@@ -16,7 +16,10 @@ class CustomHeader extends StatelessWidget {
             onTap: (){
               Scaffold.of(context).openDrawer();
             },
-            child: const CircleAvatar(child: Icon(Icons.person))
+            child: const CircleAvatar(
+              radius: 20,
+              backgroundImage: AssetImage('assets/pet_placeholder.jpg'),
+            )
           ),
           const Text(
             'Pet Health Monitoring System',
