@@ -27,7 +27,22 @@ class PetHealthApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         useMaterial3: true,
       ),
-      home: const MainScaffold(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            //show loading screen
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasData) {
+            // User is signed in
+            return const MainScaffold();
+          } else {
+            // User is NOT signed in
+            return const SignInPage();
+          }
+        },
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
