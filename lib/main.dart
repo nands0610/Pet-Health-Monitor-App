@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:pet_health/components/navbar/sidebar.dart';
+import 'package:pet_health/pages/auth-pages/splash_screen.dart';
 import 'pages/home-page/home_page.dart';
 import 'pages/vet-page/vet_page.dart';
 import 'pages/food-page/food_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; 
 import 'components/navbar/custom_header.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
 
 
 void main() async {
@@ -27,22 +29,7 @@ class PetHealthApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         useMaterial3: true,
       ),
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            //show loading screen
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasData) {
-            // User is signed in
-            return const MainScaffold();
-          } else {
-            // User is NOT signed in
-            return const SignInPage();
-          }
-        },
-      ),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
