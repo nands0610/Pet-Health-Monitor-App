@@ -42,7 +42,8 @@ dependencies:
   intl: ^0.18.1
   shared_preferences: ^2.2.2
   easy_sidemenu: ^0.7.1
-
+  lottie: ^2.7.0
+  mobile_scanner: ^3.2.0 
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,8 @@ flutter:
   uses-material-design: true
   assets: 
     - assets/pet_placeholder.jpg
+    - assets/celebration.json
+    - assets/dog-walk.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:
