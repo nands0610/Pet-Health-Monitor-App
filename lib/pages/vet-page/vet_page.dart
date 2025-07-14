@@ -13,6 +13,7 @@ class VetPage extends StatefulWidget {
 class _VetPageState extends State<VetPage> {
   DateTime _focusedDay = DateTime.now();
   final List<DateTime> _visitDays = [];
+  final List<DateTime> _scheduledPetVisits = [];
   String _vetName = 'Dr. Jane Doe';
   String _vetPhone = '+91 9876543210';
   String _vetLocation = 'Chennai';
@@ -22,6 +23,7 @@ class _VetPageState extends State<VetPage> {
     super.initState();
     _loadVetInfo();
     _loadVisitDays();
+    _loadScheduledPetVisits();
   }
 
   void _showNearBy() {
@@ -34,22 +36,51 @@ class _VetPageState extends State<VetPage> {
     );
   }
 
+  bool _isFutureDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(date.year, date.month, date.day);
+    return selected.isAfter(today);
+  }
+
   void _toggleVisitDay(DateTime day) {
-    setState(() {
-      final index = _visitDays.indexWhere((d) => isSameDay(d, day));
-      if (index >= 0) {
-        _visitDays.removeAt(index);
+    if (_isFutureDate(day)) {
+      // Add to scheduled pet visits if not already present
+      final exists = _scheduledPetVisits.any((d) => isSameDay(d, day));
+      if (!exists) {
+        setState(() {
+          _scheduledPetVisits.add(day);
+          _saveScheduledPetVisits();
+        });
       } else {
-        _visitDays.add(day);
+        setState(() {
+          _scheduledPetVisits.removeWhere((d) => isSameDay(d, day));
+          _saveScheduledPetVisits();
+        });
       }
-      _saveVisitDays();
-    });
+    } else {
+      setState(() {
+        final index = _visitDays.indexWhere((d) => isSameDay(d, day));
+        if (index >= 0) {
+          _visitDays.removeAt(index);
+        } else {
+          _visitDays.add(day);
+        }
+        _saveVisitDays();
+      });
+    }
   }
 
   Future<void> _saveVisitDays() async {
     final prefs = await SharedPreferences.getInstance();
     final strings = _visitDays.map((d) => d.toIso8601String()).toList();
     prefs.setString('visitDays', jsonEncode(strings));
+  }
+
+  Future<void> _saveScheduledPetVisits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final strings = _scheduledPetVisits.map((d) => d.toIso8601String()).toList();
+    prefs.setString('scheduledPetVisits', jsonEncode(strings));
   }
 
   Future<void> _loadVisitDays() async {
@@ -60,6 +91,18 @@ class _VetPageState extends State<VetPage> {
       setState(() {
         _visitDays.clear();
         _visitDays.addAll(list.map((s) => DateTime.parse(s)));
+      });
+    }
+  }
+
+  Future<void> _loadScheduledPetVisits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('scheduledPetVisits');
+    if (data != null) {
+      final list = List<String>.from(jsonDecode(data));
+      setState(() {
+        _scheduledPetVisits.clear();
+        _scheduledPetVisits.addAll(list.map((s) => DateTime.parse(s)));
       });
     }
   }
@@ -150,7 +193,9 @@ class _VetPageState extends State<VetPage> {
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => _visitDays.any((d) => isSameDay(d, day)),
+            selectedDayPredicate: (day) =>
+                _visitDays.any((d) => isSameDay(d, day)) ||
+                _scheduledPetVisits.any((d) => isSameDay(d, day)),
             onDaySelected: (selectedDay, focusedDay) {
               _focusedDay = focusedDay;
               _toggleVisitDay(selectedDay);
@@ -180,11 +225,56 @@ class _VetPageState extends State<VetPage> {
                     ),
                   );
                 }
+                if (_scheduledPetVisits.any((d) => isSameDay(d, date))) {
+                  return Positioned(
+                    right: 1,
+                    bottom: 1,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  );
+                }
                 return null;
               },
             ),
           ),
           const SizedBox(height: 16),
+          if (_scheduledPetVisits.isNotEmpty) ...[
+            Text(
+              'Scheduled Pet Visits',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _scheduledPetVisits.length,
+              itemBuilder: (context, index) {
+                final sortedDates = _scheduledPetVisits.toList()
+                  ..sort((a, b) => a.compareTo(b)); // Soonest first
+                final d = sortedDates[index];
+                return ListTile(
+                  leading: const Icon(Icons.event_available, color: Colors.blue),
+                  title: Text('${d.day}/${d.month}/${d.year}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        _scheduledPetVisits.removeWhere((v) => isSameDay(v, d));
+                        _saveScheduledPetVisits();
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
           if (_visitDays.isNotEmpty) ...[
             Text(
               'Vet Visit History',
