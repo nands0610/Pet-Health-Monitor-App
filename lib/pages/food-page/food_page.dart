@@ -227,25 +227,47 @@ class _FoodPageState extends State<FoodPage>
                                   style: TextStyle(
                                       fontSize: 14, color: Colors.grey)),
                               const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: _navigateToAnalytics,
-                                    icon: const Icon(Icons.bar_chart,
-                                        color: Colors.teal),
-                                    label: const Text('Analytics',
-                                        style: TextStyle(color: Colors.teal)),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  OutlinedButton.icon(
-                                    onPressed: _scanBarcode,
-                                    icon: const Icon(Icons.qr_code_scanner,
-                                        color: Colors.teal),
-                                    label: const Text('Scan New Food',
-                                        style: TextStyle(color: Colors.teal)),
-                                  ),
-                                ],
-                              )
+LayoutBuilder(
+  builder: (context, constraints) {
+    final isWide = constraints.maxWidth > 360;
+    final buttonStyle = OutlinedButton.styleFrom(
+      side: const BorderSide(color: Colors.teal),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
+
+    final analyticsButton = OutlinedButton.icon(
+      onPressed: _navigateToAnalytics,
+      icon: const Icon(Icons.bar_chart, color: Colors.teal),
+      label: const Text('Analytics', style: TextStyle(color: Colors.teal)),
+      style: buttonStyle,
+    );
+
+    final scanButton = OutlinedButton.icon(
+      onPressed: _scanBarcode,
+      icon: const Icon(Icons.qr_code_scanner, color: Colors.teal),
+      label: const Text('Scan Food', style: TextStyle(color: Colors.teal)),
+      style: buttonStyle,
+    );
+
+    return isWide
+        ? Row(
+            children: [
+              Expanded(child: analyticsButton),
+              const SizedBox(width: 8),
+              Expanded(child: scanButton),
+            ],
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              analyticsButton,
+              const SizedBox(height: 8),
+              scanButton,
+            ],
+          );
+  },
+),
+
                             ],
                           ),
                         ),
