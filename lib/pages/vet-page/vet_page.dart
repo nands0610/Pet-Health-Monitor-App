@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class VetPage extends StatefulWidget {
   const VetPage({Key? key}) : super(key: key);
@@ -20,9 +20,12 @@ class _VetPageState extends State<VetPage> {
   final int _maxVets = 3;
   final List<Map<String, String>> _vets = [];
 
-  // Firestore instance
+  // Firebase instances
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _userId = 'user_default'; // Replace with actual user ID when auth is implemented
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Get current user's UID
+  String? get _userId => _auth.currentUser?.uid;
 
   @override
   void initState() {
@@ -68,6 +71,11 @@ class _VetPageState extends State<VetPage> {
   /* ───────────────────────────── Firebase Persistence ──────────────────────────────── */
 
   Future<void> _saveVisitDays() async {
+    if (_userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
     try {
       await _firestore.collection('vethistory').doc(_userId).set({
         'visitDays': _visitDays.map((d) => d.toIso8601String()).toList(),
@@ -78,6 +86,11 @@ class _VetPageState extends State<VetPage> {
   }
 
   Future<void> _saveScheduledPetVisits() async {
+    if (_userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
     try {
       await _firestore.collection('vethistory').doc(_userId).set({
         'scheduledPetVisits': _scheduledPetVisits.map((d) => d.toIso8601String()).toList(),
@@ -88,6 +101,11 @@ class _VetPageState extends State<VetPage> {
   }
 
   Future<void> _saveVets() async {
+    if (_userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
     try {
       await _firestore.collection('vethistory').doc(_userId).set({
         'vets': _vets,
@@ -98,6 +116,11 @@ class _VetPageState extends State<VetPage> {
   }
 
   Future<void> _loadVisitDays() async {
+    if (_userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
     try {
       final doc = await _firestore.collection('vethistory').doc(_userId).get();
       if (doc.exists) {
@@ -116,6 +139,11 @@ class _VetPageState extends State<VetPage> {
   }
 
   Future<void> _loadScheduledPetVisits() async {
+    if (_userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
     try {
       final doc = await _firestore.collection('vethistory').doc(_userId).get();
       if (doc.exists) {
@@ -134,6 +162,11 @@ class _VetPageState extends State<VetPage> {
   }
 
   Future<void> _loadVets() async {
+    if (_userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
     try {
       final doc = await _firestore.collection('vethistory').doc(_userId).get();
       if (doc.exists) {
@@ -283,6 +316,20 @@ class _VetPageState extends State<VetPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading or login prompt if user is not authenticated
+    if (_userId == null) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.login, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('Please log in to view your vet information'),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
