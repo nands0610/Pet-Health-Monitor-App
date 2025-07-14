@@ -151,7 +151,7 @@ class _FoodPageState extends State<FoodPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Pet Nutrition'),
+        title: const Text('Pet Nutrition', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),),
         centerTitle: true,
         backgroundColor: Colors.teal,
       ),
