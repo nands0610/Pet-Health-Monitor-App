@@ -420,7 +420,7 @@ class _FoodPageState extends State<FoodPage>
           if (_showGoalAnimation)
             Center(
               child:
-                  Lottie.asset('celebration.json', width: 200, repeat: false),
+                  Lottie.asset('assets/celebration.json', width: 200, repeat: false),
             ),
           if (_showDogAnimation)
 if (_showDogAnimation)
@@ -437,7 +437,7 @@ if (_showDogAnimation)
         child: SizedBox(
           width: 160, // BIGGER dog
           child: Lottie.asset(
-            'dog-walk.json',
+            'assets/dog-walk.json',
             repeat: false,
           ),
         ),
