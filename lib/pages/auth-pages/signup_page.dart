@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pet_health/main.dart';
+import 'package:pet_health/pages/auth-pages/profile_page.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({Key? key}) : super(key: key);
@@ -23,7 +24,7 @@ class _SignupPageState extends State<SignupPage> {
         password: _passwordController.text,
       );
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScaffold()),
+        MaterialPageRoute(builder: (_) => ProfilePage()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() { _error = e.message; });
