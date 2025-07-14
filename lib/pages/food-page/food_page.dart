@@ -71,15 +71,45 @@ class _FoodPageState extends State<FoodPage> {
   void _addWater(double amount) {
     setState(() {
       _waterIntake += amount;
-      if (_waterIntake > _waterGoal) _waterIntake = _waterGoal;
     });
+  }
+
+  void _showCustomWaterDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Custom Water Intake'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(hintText: 'Enter amount in ml'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final val = double.tryParse(controller.text);
+              if (val != null && val > 0) {
+                _addWater(val);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Add'),
+          )
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final timeLabel = _time.format(context);
     final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
-    final waterProgress = _waterIntake / _waterGoal;
+    final waterProgress = (_waterIntake / _waterGoal).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -129,14 +159,28 @@ class _FoodPageState extends State<FoodPage> {
                           const Text('1,250 cal consumed', style: TextStyle(fontSize: 14)),
                           const Text('Goal: 2,000 cal', style: TextStyle(fontSize: 14, color: Colors.grey)),
                           const SizedBox(height: 8),
-                          OutlinedButton.icon(
-                            onPressed: _navigateToAnalytics,
-                            icon: const Icon(Icons.bar_chart, color: Colors.teal),
-                            label: const Text('Analytics', style: TextStyle(color: Colors.teal)),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.teal),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
+                          Row(
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: _navigateToAnalytics,
+                                icon: const Icon(Icons.bar_chart, color: Colors.teal),
+                                label: const Text('Analytics', style: TextStyle(color: Colors.teal)),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.teal),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: _scanBarcode,
+                                icon: const Icon(Icons.qr_code_scanner, color: Colors.teal),
+                                label: const Text('Scan New Food', style: TextStyle(color: Colors.teal)),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.teal),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -152,55 +196,6 @@ class _FoodPageState extends State<FoodPage> {
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.water_drop, color: Colors.blueAccent),
-                            SizedBox(width: 6),
-                            Text('Water Intake', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                        Text('${_waterIntake.toInt()}ml / ${_waterGoal.toInt()}ml',
-                            style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value: waterProgress,
-                      minHeight: 8,
-                      backgroundColor: Colors.grey[300],
-                      color: Colors.teal,
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 10,
-                      children: [
-                        OutlinedButton(onPressed: () => _addWater(50), child: const Text('+50ml')),
-                        OutlinedButton(onPressed: () => _addWater(100), child: const Text('+100ml')),
-                        OutlinedButton(onPressed: () => _addWater(200), child: const Text('+200ml')),
-                        OutlinedButton(
-                          onPressed: () {},
-                          child: const Text('Custom'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -230,19 +225,6 @@ class _FoodPageState extends State<FoodPage> {
                         decoration: const InputDecoration(
                           labelText: 'Food (Name - Brand - Type)',
                           border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _scanBarcode,
-                          icon: const Icon(Icons.qr_code_scanner, color: Colors.teal),
-                          label: const Text('Scan New Food', style: TextStyle(color: Colors.teal)),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.teal),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -297,40 +279,59 @@ class _FoodPageState extends State<FoodPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text('Recent Meals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            ..._recentMeals.map((meal) => Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.fastfood, color: Colors.teal),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                meal['title']!,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Text(
-                            meal['time']!,
-                            style: const TextStyle(fontSize: 13, color: Colors.grey),
-                          ),
+                        Icon(Icons.water_drop, color: Colors.blueAccent),
+                        SizedBox(width: 6),
+                        Text('Water Intake', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    LinearProgressIndicator(
+                      value: waterProgress,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey[300],
+                      color: Colors.teal,
+                    ),
+                    const SizedBox(height: 12),
+                    Text('${_waterIntake.toInt()}ml / ${_waterGoal.toInt()}ml',
+                        style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        OutlinedButton(onPressed: () => _addWater(50), child: const Text('+50ml')),
+                        OutlinedButton(onPressed: () => _addWater(100), child: const Text('+100ml')),
+                        OutlinedButton(onPressed: () => _addWater(200), child: const Text('+200ml')),
+                        OutlinedButton(
+                          onPressed: _showCustomWaterDialog,
+                          child: const Text('Custom'),
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Recent Meals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ..._recentMeals.map((meal) => Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    title: Text(meal['title']!),
+                    subtitle: Text(meal['time']!, style: const TextStyle(color: Colors.grey)),
                   ),
                 )),
           ],
