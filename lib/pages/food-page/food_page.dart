@@ -13,10 +13,19 @@ class _FoodPageState extends State<FoodPage> {
   String _selectedFood = 'Dry Kibble - Royal Canin - Dry';
   double _quantity = 100;
   TimeOfDay _time = TimeOfDay.now();
-  final List<String> _recentMeals = [
-    'Premium Dry Food - 420 cal - 1.5 cups',
-    'Wet Food - 380 cal - 1 can',
-    'Training Treats - 85 cal - 5 treats',
+  final List<Map<String, String>> _recentMeals = [
+    {
+      'title': 'Premium Dry Food - 420 cal - 1.5 cups',
+      'time': '1:30 PM'
+    },
+    {
+      'title': 'Wet Food - 380 cal - 1 can',
+      'time': '10:00 AM'
+    },
+    {
+      'title': 'Training Treats - 85 cal - 5 treats',
+      'time': '4:20 PM'
+    },
   ];
 
   void _pickTime() async {
@@ -37,10 +46,26 @@ class _FoodPageState extends State<FoodPage> {
         const SnackBar(content: Text('Meal logged successfully.')),
       );
       setState(() {
-        _recentMeals.insert(0,
-            '$_selectedFood - ${_quantity.toInt()}g at ${_time.format(context)}');
+        _recentMeals.insert(0, {
+          'title': '$_selectedFood - ${_quantity.toInt()}g',
+          'time': _time.format(context),
+        });
       });
     }
+  }
+
+  void _navigateToAnalytics() {
+    // Placeholder for analytics navigation
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Navigating to Analytics...')),
+    );
+  }
+
+  void _scanBarcode() {
+    // Placeholder for barcode scanning
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Launching barcode scanner...')),
+    );
   }
 
   @override
@@ -83,23 +108,30 @@ class _FoodPageState extends State<FoodPage> {
                             color: Colors.teal,
                           ),
                         ),
-                        const Text('60%',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('60%', style: TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(width: 24),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(today,
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        const Text('1,250 cal consumed',
-                            style: TextStyle(fontSize: 14)),
-                        const Text('Goal: 2,000 cal',
-                            style: TextStyle(fontSize: 14, color: Colors.grey)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(today, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          const Text('1,250 cal consumed', style: TextStyle(fontSize: 14)),
+                          const Text('Goal: 2,000 cal', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _navigateToAnalytics,
+                            icon: const Icon(Icons.bar_chart, color: Colors.teal),
+                            label: const Text('Analytics', style: TextStyle(color: Colors.teal)),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.teal),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   ],
                 ),
@@ -112,19 +144,15 @@ class _FoodPageState extends State<FoodPage> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Log Meal',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      const Text('Log Meal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      const Text(
-                          'Select saved food and enter quantity + time.'),
+                      const Text('Select saved food and enter quantity + time.'),
                       const SizedBox(height: 20),
                       DropdownButtonFormField<String>(
                         value: _selectedFood,
@@ -142,26 +170,36 @@ class _FoodPageState extends State<FoodPage> {
                             child: Text('Treats - Blue Buffalo - Snack'),
                           ),
                         ],
-                        onChanged: (val) =>
-                            setState(() => _selectedFood = val!),
+                        onChanged: (val) => setState(() => _selectedFood = val!),
                         decoration: const InputDecoration(
                           labelText: 'Food (Name - Brand - Type)',
                           border: OutlineInputBorder(),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _scanBarcode,
+                          icon: const Icon(Icons.qr_code_scanner, color: Colors.teal),
+                          label: const Text('Scan New Food', style: TextStyle(color: Colors.teal)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.teal),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       TextFormField(
                         initialValue: _quantity.toString(),
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: const InputDecoration(
                           labelText: 'Quantity (grams)',
                           border: OutlineInputBorder(),
                         ),
                         validator: (val) {
                           final num? qty = num.tryParse(val ?? '');
-                          if (qty == null || qty <= 0)
-                            return 'Enter a valid quantity';
+                          if (qty == null || qty <= 0) return 'Enter a valid quantity';
                           return null;
                         },
                         onChanged: (val) {
@@ -194,8 +232,7 @@ class _FoodPageState extends State<FoodPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          label: const Text('Log Meal',
-                              style: TextStyle(fontSize: 16)),
+                          label: const Text('Log Meal', style: TextStyle(fontSize: 16)),
                           onPressed: _submit,
                         ),
                       ),
@@ -205,14 +242,14 @@ class _FoodPageState extends State<FoodPage> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Recent Meals',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Recent Meals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             ..._recentMeals.map((meal) => Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
                     leading: const Icon(Icons.fastfood, color: Colors.teal),
-                    title: Text(meal),
+                    title: Text(meal['title']!),
+                    subtitle: Text(meal['time']!, style: const TextStyle(color: Colors.grey)),
                   ),
                 )),
           ],
