@@ -12,6 +12,8 @@ class _FoodPageState extends State<FoodPage> {
   final _formKey = GlobalKey<FormState>();
   String _selectedFood = 'Dry Kibble - Royal Canin - Dry';
   double _quantity = 100;
+  double _waterIntake = 650;
+  double _waterGoal = 1000;
   TimeOfDay _time = TimeOfDay.now();
   final List<Map<String, String>> _recentMeals = [
     {
@@ -55,23 +57,29 @@ class _FoodPageState extends State<FoodPage> {
   }
 
   void _navigateToAnalytics() {
-    // Placeholder for analytics navigation
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to Analytics...')),
     );
   }
 
   void _scanBarcode() {
-    // Placeholder for barcode scanning
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Launching barcode scanner...')),
     );
+  }
+
+  void _addWater(double amount) {
+    setState(() {
+      _waterIntake += amount;
+      if (_waterIntake > _waterGoal) _waterIntake = _waterGoal;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final timeLabel = _time.format(context);
     final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
+    final waterProgress = _waterIntake / _waterGoal;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -133,6 +141,54 @@ class _FoodPageState extends State<FoodPage> {
                         ],
                       ),
                     )
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.water_drop, color: Colors.blueAccent),
+                            SizedBox(width: 6),
+                            Text('Water Intake', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        Text('${_waterIntake.toInt()}ml / ${_waterGoal.toInt()}ml',
+                            style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    LinearProgressIndicator(
+                      value: waterProgress,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey[300],
+                      color: Colors.teal,
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        OutlinedButton(onPressed: () => _addWater(50), child: const Text('+50ml')),
+                        OutlinedButton(onPressed: () => _addWater(100), child: const Text('+100ml')),
+                        OutlinedButton(onPressed: () => _addWater(200), child: const Text('+200ml')),
+                        OutlinedButton(
+                          onPressed: () {},
+                          child: const Text('Custom'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -246,10 +302,35 @@ class _FoodPageState extends State<FoodPage> {
             const SizedBox(height: 10),
             ..._recentMeals.map((meal) => Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
-                  child: ListTile(
-                    leading: const Icon(Icons.fastfood, color: Colors.teal),
-                    title: Text(meal['title']!),
-                    subtitle: Text(meal['time']!, style: const TextStyle(color: Colors.grey)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.fastfood, color: Colors.teal),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                meal['title']!,
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            meal['time']!,
+                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )),
           ],
