@@ -18,7 +18,7 @@ class CustomHeader extends StatelessWidget {
             },
             child: const CircleAvatar(
               radius: 20,
-              backgroundImage: AssetImage('assets/pet_placeholder.jpg'),
+              backgroundImage: AssetImage('assets/pet_icon.png'),
             )
           ),
           const Text(
