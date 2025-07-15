@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pet_health/pages/auth-pages/splash_screen.dart';
+import 'package:pet_health/pages/profile-page/SwitchPetPage.dart';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -107,7 +108,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   title: const Text('Switch Pet'),
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to switch pet screen
+                    Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const SwitchPetPage()),
+                  );
                   },
                 ),
                 ListTile(
