@@ -43,29 +43,43 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not logged in');
 
+      // 1. Add pet document first (without photoUrl)
+      final petDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('pets')
+          .add({
+        'name': _petNameController.text.trim(),
+        'type': _typeController.text.trim(),
+        'breed': _breedController.text.trim(),
+        'weight': _weightController.text.trim(),
+        'sex': _sex,
+        'photoUrl': null,
+      });
+
       String? photoUrl;
+
+      // 2. Upload image if exists
       if (_petImage != null) {
         final ref = FirebaseStorage.instance
           .ref()
-          .child('users/${user.uid}/pet_photo.jpg');
-        await ref.putFile(_petImage!);
+          .child('users/${user.uid}/pets/${petDoc.id}.jpg');  // use pet ID as filename
+        final uploadTask = await ref.putFile(_petImage!);
         photoUrl = await ref.getDownloadURL();
+
+        // Update pet document with photoUrl
+        await petDoc.update({'photoUrl': photoUrl});
       }
 
+      // 3. Update user document
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'name': widget.name,
         'phone': widget.phone,
         'email': user.email,
-        'pet': {
-          'name': _petNameController.text.trim(),
-          'type': _typeController.text.trim(),
-          'breed': _breedController.text.trim(),
-          'weight': _weightController.text.trim(),
-          'sex': _sex,
-          'photoUrl': photoUrl,
-        },
-      });
+        'activePetId': petDoc.id,
+      }, SetOptions(merge: true));
 
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainScaffold()),
       );
@@ -75,6 +89,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
       setState(() { _isLoading = false; });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

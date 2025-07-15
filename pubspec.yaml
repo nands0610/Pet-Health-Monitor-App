@@ -71,6 +71,7 @@ flutter:
   uses-material-design: true
   assets: 
     - assets/pet_placeholder.jpg
+    - assets/pet_icon.png
     - assets/celebration.json
     - assets/dog-walk.json
 
