@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'barcode_scanner_page.dart';
+import 'dart:ui';
+import 'analytics_page.dart';
+
 
 class FoodPage extends StatefulWidget {
   const FoodPage({Key? key}) : super(key: key);
@@ -23,11 +26,23 @@ class _FoodPageState extends State<FoodPage>
 
   late AnimationController _dogController;
 
-  final List<Map<String, String>> _recentMeals = [
-    {'title': 'Premium Dry Food - 420 cal - 1.5 cups', 'time': '1:30 PM'},
-    {'title': 'Wet Food - 380 cal - 1 can', 'time': '10:00 AM'},
-    {'title': 'Training Treats - 85 cal - 5 treats', 'time': '4:20 PM'},
-  ];
+final List<Map<String, String>> _recentMeals = [
+  {
+    'title': 'Premium Dry Food - 420 cal - 1.5 cups',
+    'time': '1:30 PM',
+    'note': 'Finished all of it'
+  },
+  {
+    'title': 'Wet Food - 380 cal - 1 can',
+    'time': '10:00 AM',
+    'note': ''
+  },
+  {
+    'title': 'Training Treats - 85 cal - 5 treats',
+    'time': '4:20 PM',
+    'note': 'Was distracted and left halfway'
+  },
+];
 
   List<String> _foodOptions = [
     'Dry Kibble - Royal Canin - Dry',
@@ -63,10 +78,11 @@ class _FoodPageState extends State<FoodPage>
   void _submit() {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _recentMeals.insert(0, {
-          'title': '$_selectedFood - ${_quantity.toInt()}g',
-          'time': _time.format(context),
-        });
+_recentMeals.insert(0, {
+  'title': '$_selectedFood - ${_quantity.toInt()}g',
+  'time': _time.format(context),
+  'note': ''
+});
         _showDogAnimation = true;
         _dogController.forward(from: 0);
         Future.delayed(const Duration(seconds: 3), () {
@@ -82,6 +98,56 @@ class _FoodPageState extends State<FoodPage>
       MaterialPageRoute(builder: (context) => const AnalyticsPage()),
     );
   }
+
+void _editNoteForMeal(Map<String, String> meal) {
+  final originalNote = meal['note'] ?? '';
+  final controller = TextEditingController(text: originalNote);
+  bool hasChanged = false;
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: const Text('Add/Edit Note'),
+            content: TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'E.g., didn’t finish, ate half',
+              ),
+              maxLines: null,
+              minLines: 1,
+              onChanged: (val) {
+                setDialogState(() {
+                  hasChanged = val.trim() != originalNote.trim();
+                });
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: hasChanged
+                    ? () {
+                        setState(() {
+                          meal['note'] = controller.text.trim();
+                        });
+                        Navigator.pop(dialogContext);
+                      }
+                    : null,
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   Future<void> _scanAndAddFood() async {
     final scannedName = await Navigator.push(
@@ -426,16 +492,28 @@ LayoutBuilder(
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                ..._recentMeals.map((meal) => Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        title: Text(meal['title']!),
-                        subtitle: Text(meal['time']!,
-                            style: const TextStyle(color: Colors.grey)),
-                      ),
-                    )),
+..._recentMeals.map((meal) => Card(
+  elevation: 2,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(12)),
+  child: ListTile(
+    title: Text(meal['title']!),
+    subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(meal['time']!, style: const TextStyle(color: Color(0xFF555555))),
+        if (meal['note'] != null && meal['note']!.isNotEmpty)
+          Text('Note: ${meal['note']!}',
+              style: const TextStyle(fontStyle: FontStyle.italic)),
+      ],
+    ),
+    trailing: IconButton(
+      icon: const Icon(Icons.edit, color: Colors.teal),
+      onPressed: () => _editNoteForMeal(meal),
+    ),
+  ),
+))
+
               ],
             ),
           ),
@@ -444,20 +522,25 @@ LayoutBuilder(
               child:
                   Lottie.asset('assets/celebration.json', width: 200, repeat: false),
             ),
-          if (_showDogAnimation)
-if (_showDogAnimation)
 if (_showDogAnimation)
   AnimatedBuilder(
     animation: _dogController,
     builder: (context, child) {
-      double screenWidth = MediaQuery.of(context).size.width;
-      double leftOffset = -150 + (_dogController.value * (screenWidth + 300)); // larger buffer for smoother motion
+      final screenWidth = MediaQuery.of(context).size.width;
+      const dogWidth = 160.0;
+      const overshoot = 200.0; // 👈 how far *beyond* the screen it goes
+
+      final leftOffset = lerpDouble(
+        -dogWidth,                     // start: offscreen to the left
+        screenWidth + dogWidth + overshoot, // end: way offscreen to the right
+        _dogController.value,
+      );
 
       return Positioned(
-        bottom: 5, // LOWER the dog: smaller number = closer to bottom edge
+        bottom: 10, // Adjust for vertical placement if needed
         left: leftOffset,
         child: SizedBox(
-          width: 160, // BIGGER dog
+          width: dogWidth,
           child: Lottie.asset(
             'assets/dog-walk.json',
             repeat: false,
@@ -467,27 +550,11 @@ if (_showDogAnimation)
     },
   ),
 
+
+
         ],
       ),
     );
   }
 }
 
-class AnalyticsPage extends StatelessWidget {
-  const AnalyticsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar:
-          AppBar(title: const Text("Analytics"), backgroundColor: Colors.teal),
-      body: const Center(
-        child: Text(
-          '📊 Analytics Placeholder\n\nComing soon...',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, color: Colors.grey),
-        ),
-      ),
-    );
-  }
-}
