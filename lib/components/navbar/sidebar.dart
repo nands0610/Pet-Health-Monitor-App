@@ -11,37 +11,55 @@ class CustomDrawer extends StatefulWidget {
 }
 
 class _CustomDrawerState extends State<CustomDrawer> {
-  late Future<DocumentSnapshot> _userDoc;
+  late Future<Map<String, dynamic>?> _petData;
 
   @override
   void initState() {
     super.initState();
-    String uid = FirebaseAuth.instance.currentUser!.uid;
-    _userDoc = FirebaseFirestore.instance.collection('users').doc(uid).get();
+    _petData = _fetchPetDetails();
+  }
+
+  Future<Map<String, dynamic>?> _fetchPetDetails() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (!userDoc.exists) return null;
+
+    final userData = userDoc.data() as Map<String, dynamic>;
+    final activePetId = userData['activePetId'];
+
+    if (activePetId == null) return null;
+
+    final petDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('pets')
+        .doc(activePetId)
+        .get();
+
+    if (!petDoc.exists) return null;
+
+    return petDoc.data() as Map<String, dynamic>;
   }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero,
-      ),
-      child: FutureBuilder<DocumentSnapshot>(
-        future: _userDoc,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: FutureBuilder<Map<String, dynamic>?>(
+        future: _petData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show loading
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return const Center(child: Text('Error loading pet details'));
-          } else if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('No data found'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(child: Text('No pet data found'));
           } else {
-            var data = snapshot.data!.data() as Map<String, dynamic>;
-            var pet = data['pet'] ?? {};
-            String petName = pet['name'] ?? 'Unknown Pet';
-            String petBreed = pet['breed'] ?? 'Unknown Breed';
-            String? photoUrl = pet['photoUrl'];
+            final pet = snapshot.data!;
+            final petName = pet['name'] ?? 'Unknown Pet';
+            final petBreed = pet['breed'] ?? 'Unknown Breed';
+            final photoUrl = pet['photoUrl'];
 
             return ListView(
               padding: EdgeInsets.zero,
@@ -55,10 +73,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                        backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
                             ? NetworkImage(photoUrl)
-                            : const AssetImage('assets/pet_icon.png')
-                                as ImageProvider,
+                            : const AssetImage('assets/pet_icon.png') as ImageProvider,
                       ),
                       const SizedBox(width: 15),
                       Column(
@@ -90,6 +107,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   title: const Text('Switch Pet'),
                   onTap: () {
                     Navigator.pop(context);
+                    // TODO: Navigate to switch pet screen
                   },
                 ),
                 ListTile(
@@ -106,7 +124,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     Navigator.pop(context);
                     await FirebaseAuth.instance.signOut();
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => SplashScreen()),
+                      MaterialPageRoute(builder: (context) => const SplashScreen()),
                       (Route<dynamic> route) => false,
                     );
                   },

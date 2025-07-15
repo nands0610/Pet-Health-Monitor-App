@@ -52,18 +52,31 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
         photoUrl = await ref.getDownloadURL();
       }
 
+      // 1. Update user document
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'name': widget.name,
         'phone': widget.phone,
         'email': user.email,
-        'pet': {
-          'name': _petNameController.text.trim(),
-          'type': _typeController.text.trim(),
-          'breed': _breedController.text.trim(),
-          'weight': _weightController.text.trim(),
-          'sex': _sex,
-          'photoUrl': photoUrl,
-        },
+        // optionally: 'activePetId': will set below
+      });
+
+      // 2. Add pet document to pets subcollection
+      final petDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('pets')
+          .add({
+        'name': _petNameController.text.trim(),
+        'type': _typeController.text.trim(),
+        'breed': _breedController.text.trim(),
+        'weight': _weightController.text.trim(),
+        'sex': _sex,
+        'photoUrl': photoUrl,
+      });
+
+      // 3. Optionally set this pet as activePetId
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'activePetId': petDoc.id,
       });
 
       Navigator.of(context).pushReplacement(
