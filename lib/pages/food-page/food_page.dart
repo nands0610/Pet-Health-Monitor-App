@@ -99,31 +99,52 @@ _recentMeals.insert(0, {
     );
   }
 
-  void _editNoteForMeal(Map<String, String> meal) {
-  final controller = TextEditingController(text: meal['note']);
+void _editNoteForMeal(Map<String, String> meal) {
+  final originalNote = meal['note'] ?? '';
+  final controller = TextEditingController(text: originalNote);
+  bool hasChanged = false;
+
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Add/Edit Note'),
-      content: TextField(
-        controller: controller,
-        decoration: const InputDecoration(hintText: 'E.g., didn’t finish, ate half'),
-        maxLines: null,
-        minLines: 1
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              meal['note'] = controller.text.trim();
-            });
-            Navigator.pop(context);
-          },
-          child: const Text('Save'),
-        ),
-      ],
-    ),
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: const Text('Add/Edit Note'),
+            content: TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'E.g., didn’t finish, ate half',
+              ),
+              maxLines: null,
+              minLines: 1,
+              onChanged: (val) {
+                setDialogState(() {
+                  hasChanged = val.trim() != originalNote.trim();
+                });
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: hasChanged
+                    ? () {
+                        setState(() {
+                          meal['note'] = controller.text.trim();
+                        });
+                        Navigator.pop(dialogContext);
+                      }
+                    : null,
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
   );
 }
 
