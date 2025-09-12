@@ -1,7 +1,10 @@
+// lib/pages/vet-page/vet_page.dart
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class VetPage extends StatefulWidget {
   const VetPage({Key? key}) : super(key: key);
@@ -23,6 +26,11 @@ class _VetPageState extends State<VetPage> {
   // Firebase instances
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Map state (placeholder only for now)
+  bool _showMap = false;
+  LatLng _mapCenter = LatLng(12.9716, 77.5946); // default center (Bangalore)
+  double _mapZoom = 13.0;
 
   // Get current user's UID
   String? get _userId => _auth.currentUser?.uid;
@@ -72,7 +80,7 @@ class _VetPageState extends State<VetPage> {
 
   Future<void> _saveVisitDays() async {
     if (_userId == null) {
-      print('User not authenticated');
+      // Not logged in
       return;
     }
 
@@ -81,7 +89,7 @@ class _VetPageState extends State<VetPage> {
         'visitDays': _visitDays.map((d) => d.toIso8601String()).toList(),
       }, SetOptions(merge: true));
     } catch (e) {
-      print('Error saving visit days: $e');
+      debugPrint('Error saving visit days: $e');
     }
   }
 
@@ -380,17 +388,6 @@ class _VetPageState extends State<VetPage> {
           ),
           const SizedBox(height: 24),
 
-          // ── Nearby Vets Button ──
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _showNearBy,
-              icon: const Icon(Icons.map_outlined),
-              label: const Text('Show Nearby Vets'),
-            ),
-          ),
-          const SizedBox(height: 24),
-
           // ── Calendar ──
           Text(
             'Vet Visits',
@@ -485,6 +482,55 @@ class _VetPageState extends State<VetPage> {
               },
             ),
           ],
+
+          // Map toggle button
+          Center(
+            child: ElevatedButton.icon(
+              icon: Icon(_showMap ? Icons.map : Icons.map_outlined),
+              label: Text(_showMap ? 'Hide Map' : 'Find Nearby Vets'),
+              onPressed: () {
+                setState(() {
+                  _showMap = !_showMap;
+                });
+              },
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Placeholder map
+          if (_showMap)
+            SizedBox(
+              height: 320,
+              child: FlutterMap(
+                options: MapOptions(
+                  center: _mapCenter,
+                  zoom: _mapZoom,
+                  // you can later wire onTap or move callbacks
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: const ['a', 'b', 'c'],
+                    userAgentPackageName: 'com.example.pet_health',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        width: 60,
+                        height: 60,
+                        point: _mapCenter,
+                        child: const Icon(
+                          Icons.local_hospital,
+                          color: Colors.red,
+                          size: 36,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -530,13 +576,4 @@ class _VetPageState extends State<VetPage> {
     );
   }
 
-  void _showNearBy() {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SizedBox(
-        height: 300,
-        child: const Center(child: Text('Nearby Vets Map Placeholder')),
-      ),
-    );
-  }
 }

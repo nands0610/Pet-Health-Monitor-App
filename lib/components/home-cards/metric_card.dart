@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MetricCard extends StatelessWidget {
   final String title;
@@ -13,11 +14,23 @@ class MetricCard extends StatelessWidget {
     required this.sensorKey,
   });
 
-  Stream<List<Map<String, dynamic>>> _sensorDataStream() {
+  Future<String?> _getActivePetId() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    return userDoc.data()?['activePetId'] as String?;
+  }
+
+  Stream<List<Map<String, dynamic>>> _sensorDataStream(String userId, String petId) {
+    final from = DateTime.now().toUtc().subtract(const Duration(hours: 24));
     return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('pets')
+        .doc(petId)
         .collection('readings')
+        .where('timestamp', isGreaterThan: from)
         .orderBy('timestamp', descending: true)
-        .limit(24)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
@@ -25,14 +38,33 @@ class MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _sensorDataStream(),
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text('Not logged in'),
+        ),
+      );
+    }
+    return FutureBuilder<String?>(
+      future: _getActivePetId(),
+      builder: (context, petSnapshot) {
+        if (petSnapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 120,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (!petSnapshot.hasData || petSnapshot.data == null) {
+          return const SizedBox(
+            height: 120,
+            child: Center(child: Text('No active pet selected')),
+          );
+        }
+        final petId = petSnapshot.data!;
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _sensorDataStream(user.uid, petId),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const SizedBox(
@@ -162,8 +194,8 @@ class MetricCard extends StatelessWidget {
               ],
             );
           },
-        ),
-      ),
+        );
+      },
     );
   }
 }
